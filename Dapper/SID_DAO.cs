@@ -174,6 +174,28 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
                 return get.Invoke(gr);
             });
         }
+
+        public M ExecuteSP<M>(string spname,DynamicParameters dynamicParameters,string outName ="none")
+        {
+            if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
+            {
+                var gr = this.siddapper.tran_conn.Execute(spname, dynamicParameters, this.siddapper.itran,null,System.Data.CommandType.StoredProcedure);
+                if(!"none".Equals(outName))
+                {
+                    return dynamicParameters.Get<M>(outName);
+                }
+                return default(M);
+            }
+            return this.SIDDapper.Execute(cn =>
+            {
+                var gr = cn.Execute(spname, dynamicParameters, null, null, System.Data.CommandType.StoredProcedure);
+                if (!"none".Equals(outName))
+                {
+                    return dynamicParameters.Get<M>(outName);
+                }
+                return default(M);
+            });
+        }
         #endregion
 
         #region insert update del
