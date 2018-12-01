@@ -1,38 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Linq;
 using Dapper;
 using DapperExtensions;
-using DapperExtensions.Mapper;
+using Sephiroth.Infrastructure.Common.Attributes;
 using Sephiroth.Infrastructure.Common.Enums;
 using Sephiroth.Infrastructure.Common.Log4Net;
-using Sephiroth.Infrastructure.Common.Attributes;
 
 namespace Sephiroth.Infrastructure.DataPersistence.Dapper
 {
-    public class SID_DAO<T> where T : class
+    public class SID_DAO_Dapper
     {
-        public SID_DAO()
+        public SID_DAO_Dapper()
         {
         }
-
 
         #region Query
-        /// <summary>
-        /// 查询sql
-        /// </summary>
-        /// <param name="key"></param>
-        /// <param name="sql"></param>
-        /// <returns></returns>
-        public KeyValuePair<string, IEnumerable<M>> Query<M>(string key, string sql, object param = null)
-        {
-            return this.SIDDapper.Execute((cn) =>
-            {
-                var data = this.Query<M>(sql, param);
-                return new KeyValuePair<string, IEnumerable<M>>(key, data);
-            });
-        }
 
         /// <summary>
         /// 根据sql脚本返回泛型list,以及对应名称，推荐异步使用
@@ -40,7 +25,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <returns>The sql.</returns>
         /// <param name="key">Key.</param>
         /// <param name="sql">Sql.</param>
-        public KeyValuePair<string, IEnumerable<T>> Query(string key, string sql, object param = null)
+        public KeyValuePair<string, IEnumerable<T>> Query<T>(string key, string sql, object param = null)
         {
             return this.Query<T>(key, sql, param);
         }
@@ -52,14 +37,14 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="sql">Sql.</param>
         /// <param name="param">Parameter.</param>
         /// <typeparam name="ET">The 1st type parameter.</typeparam>
-        public IEnumerable<M> Query<M>(string sql, object param = null)
+        public IEnumerable<T> Query<T>(string sql, object param = null)
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
-                return this.siddapper.tran_conn.Query<M>(sql, param, this.siddapper.itran);
+                return this.siddapper.tran_conn.Query<T>(sql, param, this.siddapper.itran);
 
             return this.SIDDapper.Execute((cn) =>
             {
-                return cn.Query<M>(sql, param);
+                return cn.Query<T>(sql, param);
             });
         }
 
@@ -70,28 +55,17 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="sql">Sql.</param>
         /// <param name="param">Parameter.</param>
         /// <typeparam name="ET">The 1st type parameter.</typeparam>
-        public M QueryFirstOrDefault<M>(string sql, object param = null)
+        public T QueryFirstOrDefault<T>(string sql, object param = null)
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
-                return this.siddapper.tran_conn.QueryFirstOrDefault<M>(sql, param, this.siddapper.itran);
+                return this.siddapper.tran_conn.QueryFirstOrDefault<T>(sql, param, this.siddapper.itran);
 
             return this.SIDDapper.Execute((cn) =>
             {
-                return cn.QueryFirstOrDefault<M>(sql, param);
+                return cn.QueryFirstOrDefault<T>(sql, param);
             });
         }
 
-
-        /// <summary>
-        /// 根据sql脚本返回泛型list
-        /// </summary>
-        /// <returns>The sql.</returns>
-        /// <param name="sql">Sql.</param>
-        /// <param name="param">Parameter.</param>
-		public IEnumerable<T> Query(string sql, object param = null)
-        {
-            return this.Query<T>(sql, param);
-        }
 
         /// <summary>
         /// 首行首列值查询
@@ -100,14 +74,14 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="sql">Sql.</param>
         /// <param name="param">Parameter.</param>
         /// <typeparam name="ET">The 1st type parameter.</typeparam>
-        public M QuerySingle<M>(string sql, object param = null)
+        public T QuerySingle<T>(string sql, object param = null)
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
-                return this.siddapper.tran_conn.QuerySingle<M>(sql, param, this.siddapper.itran);
+                return this.siddapper.tran_conn.QuerySingle<T>(sql, param, this.siddapper.itran);
 
             return this.SIDDapper.Execute((cn) =>
             {
-                return cn.QuerySingle<M>(sql, param);
+                return cn.QuerySingle<T>(sql, param);
             });
         }
 
@@ -131,18 +105,18 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="sql">Sql.</param>
         /// <param name="param">Parameter.</param>
         /// <typeparam name="M">The 1st type parameter.</typeparam>
-        public void QueryMultiple(Action<SqlMapper.GridReader> get,string sql,object param = null)
+        public void QueryMultiple(Action<SqlMapper.GridReader> get, string sql, object param = null)
         {
-            
-			if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
+
+            if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
             {
                 var gr = this.siddapper.tran_conn.QueryMultiple(sql, param, this.siddapper.itran);
                 if (get != null)
                     get.Invoke(gr);
             }
-				
-            
-            this.SIDDapper.Execute(cn => 
+
+
+            this.SIDDapper.Execute(cn =>
             {
                 var gr = cn.QueryMultiple(sql, param);
                 if (get != null)
@@ -158,7 +132,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="sql">Sql.</param>
         /// <param name="param">Parameter.</param>
         /// <typeparam name="M">The 1st type parameter.</typeparam>
-        public M QueryMultiple<M>(Func<SqlMapper.GridReader,M> get, string sql, object param = null)
+        public T QueryMultiple<T>(Func<SqlMapper.GridReader, T> get, string sql, object param = null)
         {
 
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
@@ -175,25 +149,52 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
             });
         }
 
-        public M ExecuteSP<M>(string spname,DynamicParameters dynamicParameters,string outName ="none")
+        /// <summary>
+        /// 执行存储过程
+        /// </summary>
+        /// <returns>The sp.</returns>
+        /// <param name="spname">Spname.</param>
+        /// <param name="dynamicParameters">Dynamic parameters.</param>
+        /// <param name="outName">Out name.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public T ExecuteSP<T>(string spname, DynamicParameters dynamicParameters, string outName = "none")
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
             {
-                var gr = this.siddapper.tran_conn.Execute(spname, dynamicParameters, this.siddapper.itran,null,System.Data.CommandType.StoredProcedure);
-                if(!"none".Equals(outName))
+                var gr = this.siddapper.tran_conn.Execute(spname, dynamicParameters, this.siddapper.itran, null, System.Data.CommandType.StoredProcedure);
+                if (!"none".Equals(outName))
                 {
-                    return dynamicParameters.Get<M>(outName);
+                    return dynamicParameters.Get<T>(outName);
                 }
-                return default(M);
+                return default(T);
             }
             return this.SIDDapper.Execute(cn =>
             {
                 var gr = cn.Execute(spname, dynamicParameters, null, null, System.Data.CommandType.StoredProcedure);
                 if (!"none".Equals(outName))
                 {
-                    return dynamicParameters.Get<M>(outName);
+                    return dynamicParameters.Get<T>(outName);
                 }
-                return default(M);
+                return default(T);
+            });
+        }
+
+        /// <summary>
+        /// 查询sp
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="spname"></param>
+        /// <param name="dynamicParameters"></param>
+        /// <returns></returns>
+        public object QuerySP<T>(string spname, DynamicParameters dynamicParameters)
+        {
+            if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
+            {
+                return this.siddapper.tran_conn.Query<T>(spname, dynamicParameters, this.siddapper.itran, commandType: CommandType.StoredProcedure);
+            }
+            return this.SIDDapper.Execute(cn =>
+            {
+                return cn.Query<T>(spname, dynamicParameters, commandType: CommandType.StoredProcedure);
             });
         }
         #endregion
@@ -204,7 +205,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The insert.</returns>
         /// <param name="entity">Entity.</param>
-        public object Insert(T entity)
+        public object Insert<T>(T entity) where T: class
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
                 return this.siddapper.tran_conn.Insert(entity, this.siddapper.itran);
@@ -219,50 +220,22 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The insert.</returns>
         /// <param name="entity">Entity.</param>
-        public object Insert(List<T> entity)
-        {
-            return entity.Select(e => 
-            {
-                return this.Insert(e);
-            }).ToList();
-
-        }
-
-        /// <summary>
-        /// Insert the specified entity.
-        /// </summary>
-        /// <returns>The insert.</returns>
-        /// <param name="entity">Entity.</param>
-        public object Insert<M>(M entity)where M:class
-        {
-            if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
-                return this.siddapper.tran_conn.Insert(entity, this.siddapper.itran);
-
-            return this.SIDDapper.Execute((cn) =>
-            {
-                return cn.Insert(entity);
-            });
-        }
-
-        /// <summary>
-        /// Insert the specified entity.
-        /// </summary>
-        /// <returns>The insert.</returns>
-        /// <param name="entity">Entity.</param>
-        public object Insert<M>(List<M> entity) where M : class
+        public object Insert<T>(List<T> entity) where T: class
         {
             return entity.Select(e =>
             {
                 return this.Insert(e);
             }).ToList();
+
         }
+
 
         /// <summary>
         /// Update the specified entity.
         /// </summary>
         /// <returns>The update.</returns>
         /// <param name="entity">Entity.</param>
-		public bool Update(T entity)
+        public bool Update<T>(T entity) where T: class
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
                 return this.siddapper.tran_conn.Update(entity, this.siddapper.itran);
@@ -278,39 +251,9 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The update.</returns>
         /// <param name="entity">Entity.</param>
-        public object Update(List<T> entity)
+        public object Update<T>(List<T> entity) where T: class
         {
             return entity.Select(e =>
-            {
-                return this.Update(e);
-            }).ToList();
-        }
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public bool Update<M>(M entity)where M:class
-        {
-            if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
-                return this.siddapper.tran_conn.Update(entity, this.siddapper.itran);
-
-            return this.SIDDapper.Execute((cn) =>
-            {
-                return cn.Update(entity);
-            });
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="Listentity"></param>
-        /// <returns></returns>
-        public object Update<M>(List<M> Listentity) where M : class
-        {
-            return Listentity.Select(e =>
             {
                 return this.Update(e);
             }).ToList();
@@ -322,7 +265,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <returns>The execute.</returns>
         /// <param name="sql">Sql.</param>
         /// <param name="param">Parameter.</param>
-		public int Execute(string sql, object param = null)
+        public int Execute(string sql, object param = null)
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
                 return this.siddapper.tran_conn.Execute(sql, param, this.siddapper.itran);
@@ -355,7 +298,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The delete.</returns>
         /// <param name="entity">Entity.</param>
-		public bool Delete(object entity)
+        public bool Delete(object entity)
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
                 return this.siddapper.tran_conn.Delete(entity, this.siddapper.itran);
@@ -408,9 +351,9 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
             get
             {
                 if (siddapper == null)
-                    siddapper = new SID_Dapper(GetDBcon(dbbefore),(msg)=> 
+                    siddapper = new SID_Dapper(GetDBcon(dbbefore), (msg) =>
                     {
-                        SIC_log4net.WriteLog(typeof(T), msg);
+                        SIC_log4net.WriteLog(this.GetType(), msg);
                     });
                 return siddapper;
             }
@@ -423,7 +366,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The sel.</returns>
         /// <param name="coloumns">Coloumns.</param>
-        public string StringSel(string coloumns = "")
+        public string StringSel<T>(string coloumns = "") where T: class
         {
             var map = DapperExtensions.DapperExtensions.GetMap<T>();
             if (coloumns == "")
@@ -464,7 +407,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         public void Commit()
         {
             this.SIDDapper.itran.Commit();
-			this.SIDDapper.itran = null;
+            this.SIDDapper.itran = null;
             this.SIDDapper.tran_conn.Close();
             this.SIDDapper.tran_conn.Dispose();
             this.SIDDapper.tran_conn = null;
@@ -480,8 +423,8 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
             if (this.SIDDapper.itran != null)
                 this.SIDDapper.itran.Rollback();
             this.SIDDapper.itran = null;
-			this.SIDDapper.tran_conn.Close();
-			this.SIDDapper.tran_conn.Dispose();
+            this.SIDDapper.tran_conn.Close();
+            this.SIDDapper.tran_conn.Dispose();
             this.SIDDapper.tran_conn = null;
         }
         #endregion
@@ -491,7 +434,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// 根据attribute创建where条件
         /// </summary>
         /// <returns></returns>
-        public Tuple<string,M> WhereForConditionAttribute<M>(M param) where M:class
+        public Tuple<string, M> WhereForConditionAttribute<M>(M param) where M : class
         {
             var dbPar = this.SIDDapper.db.dbType == DBcon.dbtype.Oracle ? ":" : "@";
             var str = new List<string>();
@@ -506,7 +449,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
                     return;
 
                 if (("string".Equals(p.PropertyType.Name) ||
-                    "String".Equals(p.PropertyType.Name))&& pio.type == SIC_ConditionAttribute.condition.like)
+                    "String".Equals(p.PropertyType.Name)) && pio.type == SIC_ConditionAttribute.condition.like)
                     p.SetValue(param, "%" + p.GetValue(param) + "%");
 
                 str.Add(string.Format(" {0} {1} {2}{3}"
@@ -529,7 +472,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="CountSql"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        public Tuple<int,List<M>> GetPagination<M, M1>(string RowSql, string CountSql, M1 param)
+        public Tuple<int, List<M>> GetPagination<M, M1>(string RowSql, string CountSql, M1 param)
             where M1 : PaginationParam
             where M : class, new()
         {
@@ -540,10 +483,10 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
 
             var rows = this.Query<M>(RowSql, param).ToList();
             var total = this.QuerySingle<int>(CountSql, param);
-            return new Tuple<int,List<M>>(total, rows);
-        } 
+            return new Tuple<int, List<M>>(total, rows);
+        }
 
-        private string GetOracleSQL<M1>(string sql,M1 param)where M1:PaginationParam
+        private string GetOracleSQL<M1>(string sql, M1 param) where M1 : PaginationParam
         {
             if (param.PageNumber <= 0 || param.PageStart <= -1)
                 return sql;
@@ -557,7 +500,7 @@ where rn >= :{1} and rn <= :{2} "
             return sql;
         }
 
-        private string GetMySqlSQL<M1>(string sql,M1 param)where M1:PaginationParam
+        private string GetMySqlSQL<M1>(string sql, M1 param) where M1 : PaginationParam
         {
             if (param.PageNumber <= 0 || param.PageStart <= -1)
                 return sql;
