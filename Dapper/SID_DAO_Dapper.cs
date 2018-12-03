@@ -186,7 +186,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="spname"></param>
         /// <param name="dynamicParameters"></param>
         /// <returns></returns>
-        public object QuerySP<T>(string spname, DynamicParameters dynamicParameters)
+        public IEnumerable<T> QuerySP<T>(string spname, DynamicParameters dynamicParameters)
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
             {
@@ -434,7 +434,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// 根据attribute创建where条件
         /// </summary>
         /// <returns></returns>
-        public Tuple<string, M> WhereForConditionAttribute<M>(M param) where M : class
+        public Tuple<string, T> WhereForConditionAttribute<T>(T param) where T : class
         {
             var dbPar = this.SIDDapper.db.dbType == DBcon.dbtype.Oracle ? ":" : "@";
             var str = new List<string>();
@@ -459,7 +459,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
                              , p.Name
                              ));
             });
-            return new Tuple<string, M>(string.Join(" and ", str), param);
+            return new Tuple<string, T>(string.Join(" and ", str), param);
         }
         #endregion
 
@@ -472,21 +472,21 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// <param name="CountSql"></param>
         /// <param name="param"></param>
         /// <returns></returns>
-        public Tuple<int, List<M>> GetPagination<M, M1>(string RowSql, string CountSql, M1 param)
-            where M1 : PaginationParam
-            where M : class, new()
+        public Tuple<int, List<T>> GetPagination<T, T1>(string RowSql, string CountSql, T1 param)
+            where T1 : PaginationParam
+            where T : class, new()
         {
             if (this.SIDDapper.db.dbType == DBcon.dbtype.MySql)
                 RowSql = this.GetMySqlSQL(RowSql, param);
             else if (this.SIDDapper.db.dbType == DBcon.dbtype.Oracle)
                 RowSql = this.GetOracleSQL(RowSql, param);
 
-            var rows = this.Query<M>(RowSql, param).ToList();
+            var rows = this.Query<T>(RowSql, param).ToList();
             var total = this.QuerySingle<int>(CountSql, param);
-            return new Tuple<int, List<M>>(total, rows);
+            return new Tuple<int, List<T>>(total, rows);
         }
 
-        private string GetOracleSQL<M1>(string sql, M1 param) where M1 : PaginationParam
+        private string GetOracleSQL<T>(string sql, T param) where T : PaginationParam
         {
             if (param.PageNumber <= 0 || param.PageStart <= -1)
                 return sql;
@@ -500,7 +500,7 @@ where rn >= :{1} and rn <= :{2} "
             return sql;
         }
 
-        private string GetMySqlSQL<M1>(string sql, M1 param) where M1 : PaginationParam
+        private string GetMySqlSQL<T>(string sql, T param) where T : PaginationParam
         {
             if (param.PageNumber <= 0 || param.PageStart <= -1)
                 return sql;
