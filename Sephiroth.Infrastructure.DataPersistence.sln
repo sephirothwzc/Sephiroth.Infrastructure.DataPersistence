@@ -22,4 +22,8 @@ Global
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2E6739FA-DD93-49D7-AF02-2B73E5D68C52}
 	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		description = 更新 DapperExtensions.Query (getlist)
+		version = 1.0.6
+	EndGlobalSection
 EndGlobal
