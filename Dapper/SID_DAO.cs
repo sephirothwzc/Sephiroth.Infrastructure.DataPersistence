@@ -94,6 +94,22 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         }
 
         /// <summary>
+        /// GetList Operation (with Predicates)
+        /// </summary>
+        /// <returns>The query.</returns>
+        /// <param name="predicates">Predicates.</param>
+        public IEnumerable<T> Query(List<IPredicate> predicates,List<ISort> sorts = null)
+        {
+            if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
+                return this.siddapper.tran_conn.GetList<T>(predicates, sorts, this.siddapper.itran);
+
+            return this.SIDDapper.Execute((cn) =>
+            {
+                return cn.GetList<T>(predicates, sorts);
+            });
+        }
+
+        /// <summary>
         /// 首行首列值查询
         /// </summary>
         /// <returns>The single sql.</returns>

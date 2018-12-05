@@ -197,6 +197,42 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
                 return cn.Query<T>(spname, dynamicParameters, commandType: CommandType.StoredProcedure);
             });
         }
+
+        /// <summary>
+        /// 获取对象的dapper row值
+        /// </summary>
+        /// <param name="dynamics">Dynamics.</param>
+        /// <param name="data">Data.</param>
+        /// <typeparam name="T">The 1st type parameter.</typeparam>
+        public void SetDapperRow<T>(List<IDictionary<string, object>> dynamics, List<T> data = null)
+        {
+            if (dynamics == null) return;
+            if (data == null) data = new List<T>();
+            if (dynamics != null)
+            {
+                dynamics.ForEach(p =>
+                {
+                    T t = default(T);
+                    foreach (var pair in p)
+                    {
+                        var pro = t.GetType().GetProperty(pair.Key);
+                        if (pro == null) return;
+                        pro.SetValue(t, pair.Value);
+                    }
+                });
+            }
+        }
+
+        /// <summary>
+        /// Gets the dapper row value.
+        /// </summary>
+        /// <returns>The dapper row value.</returns>
+        /// <param name="dynamics">Dynamics.</param>
+        /// <param name="key">Key.</param>
+        public object GetDapperRowValue(IDictionary<string, object> dynamics, string key)
+        {
+            return dynamics.ToList().FirstOrDefault(x => key.Equals(x.Key)).Value;
+        }
         #endregion
 
         #region insert update del
@@ -205,7 +241,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The insert.</returns>
         /// <param name="entity">Entity.</param>
-        public object Insert<T>(T entity) where T: class
+        public object Insert<T>(T entity) where T : class
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
                 return this.siddapper.tran_conn.Insert(entity, this.siddapper.itran);
@@ -220,7 +256,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The insert.</returns>
         /// <param name="entity">Entity.</param>
-        public object Insert<T>(List<T> entity) where T: class
+        public object Insert<T>(List<T> entity) where T : class
         {
             return entity.Select(e =>
             {
@@ -235,7 +271,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The update.</returns>
         /// <param name="entity">Entity.</param>
-        public bool Update<T>(T entity) where T: class
+        public bool Update<T>(T entity) where T : class
         {
             if (this.SIDDapper.tran_conn != null && this.siddapper.itran != null)
                 return this.siddapper.tran_conn.Update(entity, this.siddapper.itran);
@@ -251,7 +287,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The update.</returns>
         /// <param name="entity">Entity.</param>
-        public object Update<T>(List<T> entity) where T: class
+        public object Update<T>(List<T> entity) where T : class
         {
             return entity.Select(e =>
             {
@@ -366,7 +402,7 @@ namespace Sephiroth.Infrastructure.DataPersistence.Dapper
         /// </summary>
         /// <returns>The sel.</returns>
         /// <param name="coloumns">Coloumns.</param>
-        public string StringSel<T>(string coloumns = "") where T: class
+        public string StringSel<T>(string coloumns = "") where T : class
         {
             var map = DapperExtensions.DapperExtensions.GetMap<T>();
             if (coloumns == "")
